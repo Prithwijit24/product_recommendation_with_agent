@@ -1,0 +1,39 @@
+[project]
+name = "age-gender-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11.11"
+dependencies = [
+    "albumentations>=2.0.5",
+    "catboost>=1.2.7",
+    "data-depth>=1.0.1",
+    "duckdb>=1.2.1",
+    "fireducks>=1.2.5",
+    "jupyter>=1.1.1",
+    "jupyterlab>=4.3.6",
+    "keras-facenet>=0.3.2",
+    "lazypredict>=0.2.13",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.1",
+    "numpy<2",
+    "opencv-contrib-python>=4.11.0.86",
+    "pandas>=2.2.3",
+    "pillow>=11.1.0",
+    "pip-autoremove>=0.10.0",
+    "piq>=0.8.0",
+    "pywavelets>=1.9.0",
+    "rich>=13.9.4",
+    "scikit-learn>=1.6.1",
+    "scipy>=1.15.2",
+    "seaborn>=0.13.2",
+    "streamlit>=1.47.1",
+    "tensorflow>=2.14.0",
+    "tensorflow-hub>=0.16.1",
+    "torch>=2.6.0",
+    "xgboost>=3.0.0",
+]
+
+
+[FORMAT]
+max-line-length=120
