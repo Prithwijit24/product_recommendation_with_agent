@@ -1,24 +1,23 @@
-FROM python:3.11.14-slim
+FROM ghcr.io/astral-sh/uv:debian-slim
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock /app/
 
 RUN apt-get update && apt-get install -y \
-    libgl1 \
-    libglib2.0-0 \
- && rm -rf /var/lib/apt/lists/*
-
-COPY project_folder project_folder
-WORKDIR project_folder
-
-# RUN pip install uv
-# RUN uv venv pyvenv311 && uv pip install -r requirements.txt
-
-RUN pip install -r requirements.txt
+	ca-certificates \
+	libgl1 \
+	libglib2.0-0 \
+	&& rm -rf /var/lib/apt/lists/*
 
 
-# RUN source pyvenv311/bin/activate
-# RUN uv pip install -r requirements.txt
 
+RUN uv sync
 
-# ENV $MOTHERDUCK_TOKEN
+COPY . /app/
+
+ENV PATH="/app/.venv/bin:$PATH"
+
 EXPOSE 8501
 
 CMD ["streamlit", "run", "app.py"]
