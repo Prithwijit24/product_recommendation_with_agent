@@ -9,6 +9,8 @@ import pandas as pd
 from loguru import logger
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC, SVR
+from lightgbm import LGBMRegressor
+from catboost import CatBoostRegressor
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, mean_absolute_percentage_error
 from joblib import dump, load
@@ -22,8 +24,10 @@ from config import train_conf
 
 def auto_classification(target, x_train, x_val, y_train, y_val):
     
-    sb.run("pip install lazypredict", shell = True, text = True)
-    import lazypredict
+    try:
+        from lazypredict.Supervised import LazyClassifier, LazyRegressor
+    except ImportError:
+        raise ImportError("Install lazypredict before running this module")
 
     if target != 'age':
         model = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
@@ -42,10 +46,6 @@ def custom_metric(target, y, y_pred):
 
 def train(target, x_train, x_val, y_train, y_val):
     
-    sb.run("pip install lightgbm catboost", shell = True, text = True)
-    from lightgbm impot LGBMRegressor
-    from catboost import CatBoostRegressor
-
     model_map = {'SVC': SVC, 'KNN': KNeighborsClassifier} if target != 'age' else {'KNN': KNeighborsRegressor, 'SVR': SVR, 'LGBM': LGBMRegressor, 'CatBoost': CatBoostRegressor}
     conf = train_conf.conf
     modelling_dir = train_conf.modelling_dir + target + '/'
