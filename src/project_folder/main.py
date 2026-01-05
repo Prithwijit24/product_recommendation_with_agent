@@ -8,7 +8,6 @@ from sklearn.metrics import mean_squared_error
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import joblib
 import argparse
-from rich import print as rprint
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA

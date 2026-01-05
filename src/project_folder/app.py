@@ -1,6 +1,5 @@
 from PIL.Image import Image
 import streamlit as st
-from rich import print as rprint
 from PIL import Image
 import numpy as np
 import subprocess as sb
@@ -11,8 +10,6 @@ import pycountry
 import json
 st.markdown("# **Next-Gen Personalized E-commerce Assistant**", width = "stretch")
 st.markdown("- This app uses models trained on the publicly available ***UTKFace*** dataset for demonstration purposes only. We :green[do not] store any user :green[images, personal data, or prediction] results. All data is processed temporarily and discarded after use.")
-import cv2
-import streamlit as st
 from recommendation_agent import agent_creation_wrapper
 from streamlit_product_card import product_card
 import json
@@ -78,7 +75,6 @@ def face_identification(image):
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
     if len(faces):
         x, y, w, h = faces[0]
-        rprint(x,y,w,h)
         new_w = int(w * 1.1)
         new_h = int(h * 1.1)
 

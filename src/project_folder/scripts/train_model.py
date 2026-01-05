@@ -6,13 +6,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import duckdb as dd
 import numpy as np
 import pandas as pd
-from lazypredict.Supervised import LazyClassifier, LazyRegressor
 from loguru import logger
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from lightgbm import LGBMRegressor
-from catboost import CatBoostRegressor
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, mean_absolute_percentage_error
 from joblib import dump, load
 import shutil
@@ -24,6 +21,10 @@ from config import train_conf
 
 
 def auto_classification(target, x_train, x_val, y_train, y_val):
+    
+    sb.run("pip install lazypredict", shell = True, text = True)
+    import lazypredict
+
     if target != 'age':
         model = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
         models, _ = model.fit(x_train, x_val, y_train, y_val)
@@ -40,10 +41,16 @@ def custom_metric(target, y, y_pred):
 
 
 def train(target, x_train, x_val, y_train, y_val):
+    
+    sb.run("pip install lightgbm catboost", shell = True, text = True)
+    from lightgbm impot LGBMRegressor
+    from catboost import CatBoostRegressor
+
     model_map = {'SVC': SVC, 'KNN': KNeighborsClassifier} if target != 'age' else {'KNN': KNeighborsRegressor, 'SVR': SVR, 'LGBM': LGBMRegressor, 'CatBoost': CatBoostRegressor}
     conf = train_conf.conf
     modelling_dir = train_conf.modelling_dir + target + '/'
     metric = train_conf.metric_dict[target]
+    
 
     try:
         os.listdir(modelling_dir)
