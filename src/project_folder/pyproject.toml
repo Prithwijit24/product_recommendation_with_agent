@@ -3,7 +3,7 @@ name = "age-gender-project"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11.11"
+requires-python = "3.11.14"
 dependencies = [
     "argparse>=1.4.0",
     "ddgs>=9.10.0",
