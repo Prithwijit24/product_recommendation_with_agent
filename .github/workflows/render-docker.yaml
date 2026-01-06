@@ -30,10 +30,10 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/streamlit-app:latest .
+            -t ${{ secrets.DOCKER_USERNAME }}/product_recommendation_with_agent:latest .
 
       # 5️⃣ Push Docker image
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/streamlit-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/product_recommendation_with_agent:latest
 
