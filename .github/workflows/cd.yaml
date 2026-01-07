@@ -1,0 +1,29 @@
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "ghoshprithwijit39@gmail.com"
+          git config --global user.name "Prithwijit24"
+
+          git clone https://huggingface.co/spaces/Prithwijit24/product_recommendation_with_agent
+          cd hf-space
+
+          git add .
+          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes"
+          git push
+
