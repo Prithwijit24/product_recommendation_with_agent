@@ -80,7 +80,7 @@ def ftr_selection_processing(prediction_type, **kwargs):
         return train_pca, val_pca, test_pca
     else:
         data = kwargs.get('data')
-        pipeline = joblib.load('models/scaler_pca_pipeline.pkl')
+        pipeline = joblib.load('models/scaler_pca_pipeline.pkl')         
         data = pipeline.transform(data)
         return data
 

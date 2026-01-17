@@ -16,7 +16,7 @@ import json
 from ddgs import DDGS
 import uuid
 from main import main
-
+import gdown
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -147,7 +147,7 @@ with st.container(border=True, vertical_alignment='center', horizontal_alignment
             resized_img = cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB)
             st.session_state.imshow = resized_img
             image_placeholder.empty()
-            im_subcol.image(st.session_state.imshow, caption="***Voila:balloon: !!! see the filtered image :ok_hand:***")
+            im_subcol.image(st.session_state.imshow, caption="***Voila:balloon: !!!  :ok_hand:***")
 
             docs_placeholder, button_placeholder = image_col.columns([5,1.6])
             docs_placeholder.markdown("Press :red-badge[Run] to see age, race, and gender")
@@ -168,14 +168,14 @@ with st.container(border=True, vertical_alignment='center', horizontal_alignment
     
     text_placeholder = st.empty()
     unicode_dict = {
-            'gender':{
-                'Male':  '♂️', 
-                'Female': '♀️'
-                },
-            'race': ':sparkles:',
-            'Male_age': ":boy:" if st.session_state.age <= 30 else ":man:" if st.session_state.age <= 60 else ":older_man",
-            'Female_age': ":girl:" if st.session_state.age <= 30 else ":woman:" if st.session_state.age <= 60 else ":older_woman"       
-            }
+        'gender':{
+            'Male':  '♂️', 
+            'Female': '♀️'
+        },
+        'race': ':sparkles:',
+        'Male_age': ":boy:" if st.session_state.age <= 30 else ":man:" if st.session_state.age <= 60 else ":older_man:",
+        'Female_age': ":girl:" if st.session_state.age <= 30 else ":woman:" if st.session_state.age <= 60 else ":older_woman:"
+    }
 
     if st.session_state.run_click:
 
@@ -183,7 +183,16 @@ with st.container(border=True, vertical_alignment='center', horizontal_alignment
         emoji_placeholder, text_placeholder = text_col.columns([0.6, 10])
 
         with text_col:
-            
+            if not os.path.exists("models"):
+                folder_url = "https://drive.google.com/drive/folders/1sYNxiyrP5ExRDepFuGd5Y6RyIsZnC_jm?usp=drive_link"
+                with st.spinner("Downloading the models ----", show_time = True):
+                    gdown.download_folder(
+                        folder_url,
+                        output="models",
+                        quiet=False,
+                        use_cookies=False
+                    )
+
             if st.session_state.run_click and not st.session_state.prediction:
                 with st.spinner(text="I am trying to predict the gender ...... ", show_time=True):
                     st.session_state.gender = main(prediction_type = "single", target = "gender", image_path = f"data/{st.session_state.session_id}/photo.jpg")

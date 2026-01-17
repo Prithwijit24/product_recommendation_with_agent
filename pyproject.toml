@@ -1,5 +1,5 @@
 [project]
-name = "product_recommendation_with_agent"
+name = "age-gender-project"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -10,6 +10,7 @@ dependencies = [
     "ddgs>=9.10.0",
     "duckdb>=1.4.3",
     "fireducks>=1.4.4",
+    "gdown>=5.2.1",
     "joblib>=1.5.3",
     "keras-facenet>=0.3.2",
     "langchain>=1.2.0",
