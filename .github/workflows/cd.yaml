@@ -21,7 +21,9 @@ jobs:
           git config --global user.name "Prithwijit24"
 
           git clone https://huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
-
+          echo "=== BEFORE RSYNC ==="
+          ls -la
+          
           rsync -av --delete \
             --exclude='.git' \
             --exclude='.github' \
@@ -29,7 +31,9 @@ jobs:
             --exclude=src/project_folder/notebooks/healthcare* \
             ./ hf-space/ || true
 
+          echo "=== AFTER RSYNC ==="
           cd hf-space
+          ls -la
           
           git add .
           git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
