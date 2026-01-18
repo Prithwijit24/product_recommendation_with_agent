@@ -287,7 +287,6 @@ if st.session_state.reco:
                                                   'role': 'user',
                                                   'content': f"Recommend me 3 most relevant products from {st.session_state.pc} category. budget is {st.session_state.budget}. {st.session_state.text}. If category is Book, show autors' name too"
                                                   }]})['messages'][-1].content
-            st.markdown(st.session_state.response)
             st.session_state.response = json.loads(st.session_state.response.strip().replace("```json", "").replace("```", ""))
     
 
