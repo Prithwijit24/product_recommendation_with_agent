@@ -22,7 +22,12 @@ jobs:
 
           git clone https://huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
           echo "=== BEFORE RSYNC ==="
+          pwd
           ls -la
+          echo "=== credentials ===="
+          echo "Branch: $GITHUB_REF"
+          echo "Workspace: $GITHUB_WORKSPACE"
+
           
           rsync -av --delete \
             --exclude='.git' \
@@ -33,9 +38,13 @@ jobs:
 
           echo "=== AFTER RSYNC ==="
           cd hf-space
+          pwd
           ls -la
           
           git add .
+          echo "=== git add successful ==="
           git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
+          echo "=== git commit successful ==="
           git push
+          echo "=== git push successful ==="
 
