@@ -20,20 +20,17 @@ jobs:
           git config --global user.email "ghoshprithwijit39@gmail.com"
           git config --global user.name "Prithwijit24"
 
-          # Clone HF Space
-          git clone https://Prithwijit24:${HF_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
+          git clone https://huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
 
-          ls
-          # Sync deploy branch contents
           rsync -av --delete \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='hf-space' \
             --exclude='README.md' \
+            --exclude=src/project_folder/notebooks/healthcare* \
             ./ hf-space/ || true
 
           cd hf-space
-          ls
           
           git add .
           git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
