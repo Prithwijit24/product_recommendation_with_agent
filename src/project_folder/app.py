@@ -15,7 +15,7 @@ from streamlit_product_card import product_card
 import json
 from ddgs import DDGS
 import uuid
-st.spinner("loading larger files .... ", show_time = True):
+with st.spinner("loading larger files .... ", show_time = True):
     from main import main
 import gdown
 
