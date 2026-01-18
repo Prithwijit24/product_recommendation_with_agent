@@ -1,4 +1,4 @@
-name: Build & Push Docker Image (Render)
+name: Build & Push Docker Image (CI)
 
 on:
 #  push:
