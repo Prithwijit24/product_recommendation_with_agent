@@ -31,7 +31,8 @@ jobs:
             --exclude='README.md' \
             --exclude=src/project_folder/notebooks/healthcare* \
             ./ hf-space/ || true
-          
+
+          cd hf-space
           git add .
           echo "=== git add successful ==="
           git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
