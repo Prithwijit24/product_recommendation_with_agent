@@ -21,4 +21,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 7860
 
-CMD ["streamlit", "run", "src/project_folder/app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableXsrfProtection=false", "--server.enableStaticServing=false", "--browser.gatherUsageStats=false"]]
+CMD ["streamlit", "run", "src/project_folder/app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableXsrfProtection=false", "--server.enableStaticServing=false", "--browser.gatherUsageStats=false"]
