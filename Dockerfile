@@ -19,6 +19,6 @@ COPY . /app/
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-EXPOSE 8501
+EXPOSE 7860
 
-CMD ["streamlit", "run", "src/project_folder/app.py"]
+CMD ["streamlit", "run", "src/project_folder/app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableXsrfProtection=false", "--server.enableStaticServing=false", "--browser.gatherUsageStats=false"]]
