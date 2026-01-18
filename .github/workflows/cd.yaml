@@ -13,6 +13,9 @@ jobs:
         with:
           ref: deploy_branch
 
+      - name: Verify branch
+        run: git rev-parse --abbrev-ref HEAD
+
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_ACCESS_TOKEN }}
@@ -20,7 +23,7 @@ jobs:
           git config --global user.email "ghoshprithwijit39@gmail.com"
           git config --global user.name "Prithwijit24"
 
-          git clone https://Prithwijit24:${HF_ACCESS_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
+          git clone https://Prithwijit24:${HF_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
           echo "=== BEFORE RSYNC ==="
           pwd
           ls -la
