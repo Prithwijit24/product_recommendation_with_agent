@@ -1,4 +1,4 @@
-name: Deploy to Hugging Face Space
+name: Deploy to Hugging Face Space (CD)
 
 on:
   workflow_dispatch:
@@ -23,6 +23,7 @@ jobs:
           # Clone HF Space
           git clone https://Prithwijit24:${HF_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
 
+          ls
           # Sync deploy branch contents
           rsync -av --delete \
             --exclude='.git' \
@@ -31,7 +32,8 @@ jobs:
             ./ hf-space/
 
           cd hf-space
-
+          ls
+          
           git add .
           git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
           git push
