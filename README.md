@@ -1,5 +1,11 @@
 # Next-Gen Personalized E-commerce Assistant
 
+<img width="1914" height="971" alt="image" src="https://github.com/user-attachments/assets/16dba696-4794-4812-aff1-d403d6f668f6" />
+
+<img width="1525" height="916" alt="image" src="https://github.com/user-attachments/assets/35dc1edd-31d6-45dd-b2ab-09bf1d81a1b8" />
+
+
+
 This project is a Streamlit web application that provides personalized product recommendations. It uses computer vision models to predict a user's age, gender, and ethnicity from an image and then leverages a large language model (LLM) based agent to suggest products tailored to their demographic profile and preferences.
 
 ## Features
