@@ -1,17 +1,17 @@
 name: Deploy to Hugging Face Space
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout deploy branch
         uses: actions/checkout@v4
+        with:
+          ref: deploy_branch
 
       - name: Push to Hugging Face Space
         env:
@@ -20,10 +20,19 @@ jobs:
           git config --global user.email "ghoshprithwijit39@gmail.com"
           git config --global user.name "Prithwijit24"
 
-          git clone https://huggingface.co/spaces/Prithwijit24/product_recommendation_with_agent
+          # Clone HF Space
+          git clone https://Prithwijit24:${HF_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf-space
+
+          # Sync deploy branch contents
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='README.md' \
+            ./ hf-space/
+
           cd hf-space
 
           git add .
-          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes"
+          git commit -m "Deploy from GitHub deploy branch" || echo "No changes to deploy"
           git push
 
