@@ -15,7 +15,8 @@ from streamlit_product_card import product_card
 import json
 from ddgs import DDGS
 import uuid
-from main import main
+st.spinner("loading larger files .... ", show_time = True):
+    from main import main
 import gdown
 
 if "session_id" not in st.session_state:
