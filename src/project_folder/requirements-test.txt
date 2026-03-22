@@ -1,0 +1,35 @@
+# Testing Requirements
+# Install with: pip install -r requirements-test.txt
+
+# Core testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+pytest-asyncio>=0.21.0
+pytest-timeout>=2.1.0
+pytest-xdist>=3.3.1  # For parallel test execution
+
+# Data & numerical processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Mocking and testing utilities
+unittest-mock>=1.5.0
+responses>=0.23.0  # Mock HTTP requests
+
+# Code quality (optional but recommended)
+pytest-flake8>=1.1.1
+pytest-pylint>=0.19.0
+
+# Performance profiling (optional)
+pytest-benchmark>=4.0.0
+
+# Reporting (optional)
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+
+# Watch mode for development (optional)
+pytest-watch>=4.2.0
