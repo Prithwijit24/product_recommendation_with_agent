@@ -518,8 +518,8 @@ def _post(p: dict, payload: dict, timeout: float) -> dict:
         "Authorization": f"Bearer {os.getenv(p['env_key'], '')}",
         "Content-Type": "application/json",
     }
-    with httpx.Client(timeout=timeout) as client:
-        resp = client.post(url, headers=headers, json=payload)
+    with httpx.Client(timeout=timeout, headers=headers) as client:
+        resp = client.post(url, json=payload)
         if resp.status_code == 400 and "tool" in (resp.text or "").lower():
             raise ToolNotSupportedError(p["name"])
         if resp.status_code != 200:
@@ -579,6 +579,12 @@ def call_llm(
             DEGRADED_SESSION.add(p["name"])
     raise RuntimeError(f"No LLM provider succeeded. Last error: {last_error}")
 ```
+
+Note: `_post` must NOT pass `headers` as a per-request kwarg alongside `url`: the tests patch
+`httpx.Client.post` with a bare function `fake_post(url, headers, json, timeout=None)`, and an
+instance-bound call injects `self` as the first positional, shifting `url` into the `headers`
+slot (`TypeError: fake_post() got multiple values for argument 'headers'`). Keep `Authorization`
+and `Content-Type` on the `httpx.Client` constructor instead and call `client.post(url, json=payload)`.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
