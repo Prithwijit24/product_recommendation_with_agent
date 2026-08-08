@@ -239,6 +239,8 @@ def _enforce_routine_keys(routine: list[dict]) -> list[dict]:
         item = dict(item)
         if "product_name" not in item and "name" in item:
             item["product_name"] = item.pop("name")
+        if not item.get("price"):
+            item["price"] = "price unavailable"
         out.append(item)
     return out
 
@@ -280,6 +282,8 @@ def orchestrate(demographics: dict, answers: dict, session_id: str | None = None
             final = _run_agent_loop(messages, profile_text, flags)
         if result is None:
             result = _strip_flagged(final or build_fallback(), flags)
+        if not result.get("routine"):
+            result = build_fallback()
         return {
             "session_id": session_id,
             "routine": _enforce_routine_keys(result.get("routine", [])),

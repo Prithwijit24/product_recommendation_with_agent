@@ -51,4 +51,37 @@ def test_enforce_routine_keys_renames_name():
     assert out[0]["product_name"] == "CeraVe"
     assert "name" not in out[0]
     out2 = orchestrator._enforce_routine_keys([{"product_name": "Already"}])
-    assert out2[0] == {"product_name": "Already"}
+    assert out2[0] == {"product_name": "Already", "price": "price unavailable"}
+
+
+def test_enforce_routine_keys_maps_empty_price():
+    out = orchestrator._enforce_routine_keys(
+        [{"product_name": "X", "price": "", "url": "u", "ingredient": "i", "reasoning": "r"}]
+    )
+    assert out[0]["price"] == "price unavailable"
+    out2 = orchestrator._enforce_routine_keys([{"product_name": "Y"}])
+    assert out2[0]["price"] == "price unavailable"
+    out3 = orchestrator._enforce_routine_keys([{"product_name": "Z", "price": "12.99"}])
+    assert out3[0]["price"] == "12.99"
+
+
+def test_stripped_empty_uses_fallback(monkeypatch):
+    stubborn_json = (
+        '```json\n{"routine": [{"product_name": "Tretinoin serum", "url": "", "price": "", '
+        '"ingredient": "tretinoin", "reasoning": "r"}], "concerns_addressed": ["acne"], '
+        '"disclaimer": "d"}\n```'
+    )
+
+    def stubborn_llm(*a, **k):
+        return {"type": "content", "content": stubborn_json}
+
+    monkeypatch.setattr(orchestrator.providers, "call_llm", stubborn_llm)
+    out = orchestrator.orchestrate(
+        {"age_range": "25-34", "sex": {"value": "F"}, "race": {"value": "Asian"}},
+        {"skin_type": "combination", "pregnant": "yes", "budget": "medium"},
+    )
+    assert out["routine"]
+    assert [p["product_name"] for p in out["routine"]] == [
+        p["product_name"] for p in orchestrator.FALLBACK_ROUTINE
+    ]
+    assert "disclaimer" in out
