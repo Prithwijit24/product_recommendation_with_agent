@@ -54,7 +54,7 @@ Create `tests/agentic/test_config.py`:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import config
 
@@ -181,7 +181,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic.safety import check_contraindications, fitzpatrick_for
 
@@ -356,10 +356,11 @@ git commit -m "feat: deterministic fitzpatrick map + questionnaire + contraindic
 Create `tests/agentic/test_providers.py`:
 
 ```python
+import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import providers
 
@@ -368,6 +369,7 @@ class FakeResponse:
     def __init__(self, payload, status=200):
         self.payload = payload
         self.status_code = status
+        self.text = json.dumps(payload)
 
     def json(self):
         return self.payload
@@ -610,7 +612,7 @@ Create `tests/agentic/test_aistack.py`:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import aistack
 
@@ -748,7 +750,7 @@ Create `tests/agentic/test_products.py`:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import products
 
@@ -1008,7 +1010,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import research
 
@@ -1218,7 +1220,7 @@ Create `tests/agentic/test_orchestrator.py`:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import orchestrator
 
