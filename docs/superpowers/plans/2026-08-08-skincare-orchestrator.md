@@ -746,7 +746,7 @@ git commit -m "feat: aistack http client (search/crawl/health)"
 
 **Interfaces:**
 - Consumes: `aistack.AistackClient`, env `SERP_API_KEY`.
-- Produces: `products.find_products(ingredients: list[str], budget: str = "medium") -> list[dict]`; items `{"name", "url", "price", "ingredient", "ingredient_match", "source"}`, one per ingredient, `price` = "" if not numeric (caller maps to "price unavailable").
+- Produces: `products.find_products(ingredients: list[str], budget: str = "medium") -> list[dict]`; items `{"name", "url", "price", "ingredient", "ingredient_match", "source"}`, one per ingredient, `price` = "" if not numeric (caller maps to "price unavailable"). SerpAPI failures (4xx/5xx or network errors) degrade to the aistack/Open Beauty Facts fallbacks instead of aborting the call.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -953,10 +953,13 @@ def find_products(ingredients: list[str], budget: str = "medium") -> list[dict]:
     result: list[dict] = []
     for ing in ingredients:
         found: list[dict] = []
-        for q in (f"{ing} skincare", ing):
-            found = _serp_search(q)
-            if found:
-                break
+        try:
+            for q in (f"{ing} skincare", ing):
+                found = _serp_search(q)
+                if found:
+                    break
+        except Exception:
+            found = []
         if not found:
             found = _aistack_fallback(ing)
         if not found:
