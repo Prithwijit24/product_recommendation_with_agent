@@ -36,3 +36,19 @@ def test_orchestrate_fallback_when_llm_dead(monkeypatch):
     assert "disclaimer" in out
     assert all(p["url"] == "" for p in out["routine"])
     assert set(out.keys()) == {"session_id", "routine", "concerns_addressed", "disclaimer"} or "error" in out
+
+
+def test_strip_flagged_keeps_products_for_sensitive_user():
+    routine = {"routine": [{"product_name": "X", "ingredient": "niacinamide"}]}
+    out = orchestrator._strip_flagged(routine, {"sensitive_general": True})
+    assert len(out["routine"]) == 1
+
+
+def test_enforce_routine_keys_renames_name():
+    out = orchestrator._enforce_routine_keys(
+        [{"name": "CeraVe", "url": "", "price": "", "ingredient": "niacinamide"}]
+    )
+    assert out[0]["product_name"] == "CeraVe"
+    assert "name" not in out[0]
+    out2 = orchestrator._enforce_routine_keys([{"product_name": "Already"}])
+    assert out2[0] == {"product_name": "Already"}

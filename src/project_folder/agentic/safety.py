@@ -42,6 +42,7 @@ def check_contraindications(
             issues.append(f"Not recommended during pregnancy: {raw}")
         if flags.get("sensitivity_fragrance") and any(f in text for f in _STRICT_BLOCKED):
             issues.append(f"Fragrance-sensitive skin: avoid {raw}")
-    if flags.get("sensitive_general"):
+    ok = len(issues) == 0
+    if ok and flags.get("sensitive_general"):
         issues.append("Sensitive skin — patch test any new product before full use.")
-    return len(issues) == 0, issues
+    return ok, issues

@@ -227,10 +227,20 @@ def build_fallback() -> dict:
 def _strip_flagged(routine_json: dict, flags: dict) -> dict:
     kept = []
     for p in routine_json.get("routine", []):
-        _, issues = check_contraindications([p.get("ingredient", "")], flags)
-        if not issues:
+        ok, _ = check_contraindications([p.get("ingredient", "")], flags)
+        if ok:
             kept.append(p)
     return {**routine_json, "routine": kept}
+
+
+def _enforce_routine_keys(routine: list[dict]) -> list[dict]:
+    out = []
+    for item in routine:
+        item = dict(item)
+        if "product_name" not in item and "name" in item:
+            item["product_name"] = item.pop("name")
+        out.append(item)
+    return out
 
 
 def orchestrate(demographics: dict, answers: dict, session_id: str | None = None) -> dict:
@@ -272,7 +282,7 @@ def orchestrate(demographics: dict, answers: dict, session_id: str | None = None
             result = _strip_flagged(final or build_fallback(), flags)
         return {
             "session_id": session_id,
-            "routine": result.get("routine", []),
+            "routine": _enforce_routine_keys(result.get("routine", [])),
             "concerns_addressed": result.get("concerns_addressed", []),
             "disclaimer": DISCLAIMER,
         }
@@ -280,7 +290,7 @@ def orchestrate(demographics: dict, answers: dict, session_id: str | None = None
         fb = build_fallback()
         return {
             "session_id": session_id,
-            "routine": fb["routine"],
+            "routine": _enforce_routine_keys(fb["routine"]),
             "concerns_addressed": [],
             "disclaimer": DISCLAIMER,
             "error": str(e),

@@ -42,3 +42,17 @@ def test_clean_ingredients_pass():
     )
     assert ok
     assert issues == []
+
+
+def test_sensitive_general_advisory_does_not_block():
+    ok, issues = check_contraindications(["niacinamide"], {"sensitive_general": True})
+    assert ok
+    assert any("patch test" in i.lower() for i in issues)
+
+
+def test_sensitive_general_with_blocked_ingredient():
+    ok, issues = check_contraindications(
+        ["retinol"], {"sensitive_general": True, "pregnancy": "yes"}
+    )
+    assert not ok
+    assert any("pregnancy" in i.lower() for i in issues)
