@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from project_folder.agentic import products
@@ -83,3 +85,33 @@ def test_find_products_keeps_source_and_match(monkeypatch):
     out = products.find_products(["niacinamide"], budget="medium")
     assert out[0]["source"]
     assert "niacinamide" in out[0]["ingredient_match"].lower()
+
+
+def test_serp_error_degrades_to_fallback(monkeypatch):
+    monkeypatch.setenv("SERP_API_KEY", "KEY")
+
+    def fake_get(url, params, timeout=None):
+        raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(products.httpx, "get", fake_get)
+
+    def fake_obf(query):
+        return [{"name": "Fragrance Fixer", "url": "http://obf", "price": "", "source": "openbeautyfacts"}]
+
+    monkeypatch.setattr(products, "_open_beauty_facts", fake_obf)
+    out = products.find_products(["fragrance"], budget="medium")
+    assert len(out) == 1
+    assert out[0]["name"] == "Fragrance Fixer"
+    assert out[0]["source"] == "openbeautyfacts"
+
+
+def test_serp_error_all_fallbacks_empty_returns_empty(monkeypatch):
+    monkeypatch.setenv("SERP_API_KEY", "KEY")
+
+    def fake_get(url, params, timeout=None):
+        raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(products.httpx, "get", fake_get)
+    monkeypatch.setattr(products, "_open_beauty_facts", lambda query: [])
+    out = products.find_products(["fragrance"], budget="medium")
+    assert out == []

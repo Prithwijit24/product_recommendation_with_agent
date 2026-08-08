@@ -106,10 +106,13 @@ def find_products(ingredients: list[str], budget: str = "medium") -> list[dict]:
     result: list[dict] = []
     for ing in ingredients:
         found: list[dict] = []
-        for q in (f"{ing} skincare", ing):
-            found = _serp_search(q)
-            if found:
-                break
+        try:
+            for q in (f"{ing} skincare", ing):
+                found = _serp_search(q)
+                if found:
+                    break
+        except Exception:
+            found = []
         if not found:
             found = _aistack_fallback(ing)
         if not found:
