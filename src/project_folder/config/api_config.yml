@@ -1,0 +1,29 @@
+agnes:
+  base_url: https://apihub.agnes-ai.com/v1
+  api_type: openai
+  planner_model: agnes-2.0-flash
+  worker_model: agnes-2.0-flash
+
+opencode:
+  base_url: https://opencode.ai/zen/v1/
+  api_type: openai
+  planner_model: deepseek-v4-flash-free
+  worker_model: big-pickle
+
+llm7io:
+  base_url: https://api.llm7.io/v1
+  api_type: openai
+  planner_model: gpt-oss:20b
+  worker_model: [codestral-latest, minimax-m2.7]
+
+oraclellm:
+  base_url: https://oraclellm.duckdns.org/v1
+  api_type: openai
+  # Single model for both roles: model loading/unloading is the server's main
+  # cost, so keep exactly one healthy model resident for planner AND worker.
+  planner_model: deepseek-r1-80k:latest
+  worker_model: deepseek-r1-80k:latest
+  # deepseek-r1 is a reasoning model: a real prompt can take ~110-170s, so give
+  # both roles headroom over the global 60s default.
+  planner_timeout: 300
+  worker_timeout: 240
