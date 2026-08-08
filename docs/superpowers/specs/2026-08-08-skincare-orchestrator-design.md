@@ -50,15 +50,16 @@ The ML model predicts race into 4 categories: `asian`, `indian`, `white`, `black
 Race itself is NEVER used for product selection or in user-facing output. It is converted
 to a Fitzpatrick band + primary type via this fixed mapping:
 
-| Race (model)   | Types (band, exhaustive union = {1..7}) | Primary |
+| Race (model)   | Types (band, exhaustive union = {1..6}) | Primary |
 |----------------|-----------------------------------------|---------|
 | `white`        | [1]                                     | 1       |
 | `asian`        | [1, 2]                                  | 1       |
 | `indian`       | [2, 3]                                  | 2       |
-| `black`        | [4, 5, 6, 7]                            | 4       |
+| `black`        | [4, 5, 6]                               | 4       |
 
-Primary = most conservative type in the band (assume the most sun-sensitive end; safest
-default for ingredient/sunscreen matching). Adjustable as a single config value per row.
+Classic Fitzpatrick I–VI only (no type VII). Primary = most conservative type in the band
+(assume the most sun-sensitive end; safest default for ingredient/sunscreen matching).
+Adjustable as a single config value per row.
 
 Research prompts ground reasoning in Fitzpatrick biology (melanin density, sun-sensitivity,
 photoaging pattern), never race. Agent output must never reference race, age, sex.
