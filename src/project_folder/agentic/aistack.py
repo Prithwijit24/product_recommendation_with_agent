@@ -25,7 +25,7 @@ class AistackClient:
             json={"query": query, "max_results": max_results},
         )
         if resp.status_code != 200:
-            raise RuntimeError(f"aistack /search: HTTP {resp.status_code}")
+            raise RuntimeError(f"aistack /search: HTTP {resp.status_code} {resp.text[:200]}")
         return resp.json().get("results", [])
 
     def crawl(self, url: str, only_main_content: bool = True) -> str:
@@ -37,7 +37,7 @@ class AistackClient:
             json={"url": url, "only_main_content": only_main_content},
         )
         if resp.status_code != 200:
-            raise RuntimeError(f"aistack /crawl: HTTP {resp.status_code}")
+            raise RuntimeError(f"aistack /crawl: HTTP {resp.status_code} {resp.text[:200]}")
         return resp.json().get("markdown", "")
 
     def health(self) -> dict:
