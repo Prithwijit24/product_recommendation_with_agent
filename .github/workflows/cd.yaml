@@ -2,9 +2,9 @@ name: Deploy to Hugging Face Space
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -33,7 +33,7 @@ jobs:
         env:
           HF_ACCESS_TOKEN: ${{ secrets.HF_ACCESS_TOKEN }}
         run: |
-          huggingface-cli upload Prithwijit24/product_reco_deploy . . \
+          hf upload Prithwijit24/product_reco_deploy . . \
             --repo-type=space \
             --token="$HF_ACCESS_TOKEN" \
             --commit-message="Auto-deploy from GitHub Actions"
