@@ -24,8 +24,8 @@ def test_search_posts_to_endpoint(monkeypatch):
         captured["headers"] = headers
         return FakeResponse({"number_of_results": 1, "results": [{"url": "http://x", "title": "t"}]})
 
-    monkeypatch.setenv("BASE_URL", "https://aistack.example")
-    monkeypatch.setenv("API_KEY", "k")
+    monkeypatch.setenv("AISTACK_BASE_URL", "https://aistack.example")
+    monkeypatch.setenv("AISTACK_API_KEY", "k")
     client = aistack.AistackClient()
     monkeypatch.setattr(client._http, "post", fake_post)
     out = client.search("niacinamide", max_results=3)
@@ -36,8 +36,8 @@ def test_search_posts_to_endpoint(monkeypatch):
 
 
 def test_health_live(monkeypatch):
-    monkeypatch.setenv("BASE_URL", "https://aistack.example")
-    monkeypatch.setenv("API_KEY", "k")
+    monkeypatch.setenv("AISTACK_BASE_URL", "https://aistack.example")
+    monkeypatch.setenv("AISTACK_API_KEY", "k")
     client = aistack.AistackClient()
 
     def fake_get(url, headers, timeout=None):

@@ -22,9 +22,14 @@ import streamlit as st
 dd.execute("INSTALL motherduck; LOAD motherduck;")
 # duckdb.execute(f"SET motherduck_token=current_setting('MOTHERDUCK_TOKEN');")
 
-ac_tkn = st.secrets["MOTHERDUCK_TOKEN"] if st.secrets["MOTHERDUCK_TOKEN"] else os.getenv("MOTHERDUCK_TOKEN")
+ac_tkn = os.getenv("MOTHERDUCK_TOKEN")
 if ac_tkn is None:
-    logger.error("MOTHERDUCK_TOKEN is not None")
+    try:
+        ac_tkn = st.secrets.get("MOTHERDUCK_TOKEN")
+    except Exception:
+        ac_tkn = None
+if ac_tkn is None:
+    logger.error("MOTHERDUCK_TOKEN is not set; skipping token configuration")
 else:
     dd.execute(f"SET motherduck_token='{ac_tkn}';")
 

@@ -2,6 +2,12 @@
 __pycache__/
 *.py[codz]
 *$py.class
+*.pkl
+docs/**
+.superpowers/
+
+# Live smoke / inference outputs
+data/
 
 # C extensions
 *.so

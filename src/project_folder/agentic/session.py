@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from . import config
 from .safety import fitzpatrick_for
 
-DEMOGRAPHIC_KEYS = ("age_range", "sex", "race")
+
+def _session_cfg() -> dict:
+    return config.get_section("session")
 
 
 def build_profile(demographics: dict, answers: dict) -> tuple[str, dict]:
@@ -20,9 +23,11 @@ def build_profile(demographics: dict, answers: dict) -> tuple[str, dict]:
         f"sensitivities={answers.get('sensitivities')}, "
         f"budget={answers.get('budget')}"
     )
+    cfg = _session_cfg()
+    triggers = cfg.get("flag_triggers", {})
     flags = {
         "pregnancy": answers.get("pregnant"),
-        "sensitivity_fragrance": "Fragrance-sensitive" in (answers.get("sensitivities") or []),
-        "sensitive_general": answers.get("skin_type") == "Sensitive",
+        "sensitivity_fragrance": triggers.get("fragrance", "") in (answers.get("ensitivities") or []),
+        "sensitive_general": answers.get("skin_type") == triggers.get("sensitive_skin", ""),
     }
     return profile_text, flags

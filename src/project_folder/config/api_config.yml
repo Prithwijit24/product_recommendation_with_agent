@@ -1,29 +1,271 @@
-agnes:
-  base_url: https://apihub.agnes-ai.com/v1
-  api_type: openai
-  planner_model: agnes-2.0-flash
-  worker_model: agnes-2.0-flash
+# Single source of truth for the agentic module.
+# Providers are nested under `providers:` so other sections can coexist.
 
-opencode:
-  base_url: https://opencode.ai/zen/v1/
-  api_type: openai
-  planner_model: deepseek-v4-flash-free
-  worker_model: big-pickle
+defaults:
+  http_timeout: 60.0
+  env_key_template: "{name_upper}_API_KEY"
 
-llm7io:
-  base_url: https://api.llm7.io/v1
-  api_type: openai
-  planner_model: gpt-oss:20b
-  worker_model: [codestral-latest, minimax-m2.7]
+providers:
+  agnes:
+    base_url: https://apihub.agnes-ai.com/v1
+    api_type: openai
+    planner_model: agnes-2.0-flash
+    worker_model: agnes-2.0-flash
 
-oraclellm:
-  base_url: https://oraclellm.duckdns.org/v1
-  api_type: openai
-  # Single model for both roles: model loading/unloading is the server's main
-  # cost, so keep exactly one healthy model resident for planner AND worker.
-  planner_model: deepseek-r1-80k:latest
-  worker_model: deepseek-r1-80k:latest
-  # deepseek-r1 is a reasoning model: a real prompt can take ~110-170s, so give
-  # both roles headroom over the global 60s default.
-  planner_timeout: 300
-  worker_timeout: 240
+  opencode:
+    base_url: https://opencode.ai/zen/v1/
+    api_type: openai
+    planner_model: deepseek-v4-flash-free
+    worker_model: big-pickle
+
+  llm7io:
+    base_url: https://api.llm7.io/v1
+    api_type: openai
+    planner_model: gpt-oss:20b
+    worker_model: [codestral-latest, minimax-m2.7]
+
+  oraclellm:
+    base_url: https://oraclellm.duckdns.org/v1
+    api_type: openai
+    # Single model for both roles: model loading/unloading is the server's main
+    # cost, so keep exactly one healthy model resident for planner AND worker.
+    planner_model: deepseek-r1-80k:latest
+    worker_model: deepseek-r1-80k:latest
+    # deepseek-r1 is a reasoning model: a real prompt can take ~110-170s, so give
+    # both roles headroom over the global 60s default.
+    planner_timeout: 300
+    worker_timeout: 240
+
+aistack:
+  base_url_env: AISTACK_BASE_URL
+  api_key_env: AISTACK_API_KEY
+  auth_header: X-API-Key
+  http_timeout: 90.0
+  default_max_results: 5
+  error_text_truncate: 200
+  endpoints:
+    search: /search
+    crawl: /crawl
+    health: /health
+
+products:
+  default_budget: medium
+  budget_limits:
+    low: 30.0
+    medium: 90.0
+    high: .inf
+  serpapi:
+    url: https://serpapi.com/search.json
+    engine: google_shopping
+    api_key_env: SERP_API_KEY
+    timeout: 20.0
+    query_templates:
+      - "{ing} skincare"
+      - "{ing}"
+  open_beauty_facts:
+    search_url: https://world.openbeautyfacts.org/cgi/search.pl
+    product_url_template: https://world.openbeautyfacts.org/product/{pid}
+    fields: product_name,brands,_id
+    timeout: 15.0
+    max_results: 5
+  aistack_fallback:
+    max_results: 5
+    query_template: "{ingredient} serum product"
+
+research:
+  evidence:
+    rounds: 2
+    max_results_per_round: 3
+    max_chunks: 6
+    chunk_char_limit: 300
+  max_ingredients: 5
+  prompts:
+    skin_concerns: |
+      You are a dermatology research sub-agent.
+      Profile: {profile}
+
+      Find the 2-4 most likely skin-science considerations implied by this profile using
+      credible dermatology/health sources only. Ground your reasoning in skin biology
+      (melanin density, sun-sensitivity, photoaging, hormonal changes) - never race labels.
+      Output ONLY a JSON array (no prose):
+      [{{"concern": "...", "evidence": "one-line", "source": "url"}}]
+    ingredients: |
+      You are a cosmetic science research sub-agent.
+      Concerns to address: {concerns}
+
+      Research cosmetic ingredients that may help with each concern. Do not include
+      medical treatments or prescription claims. Output ONLY a JSON array (no prose):
+      [{{"ingredient": "...", "addresses": "concern", "why": "one-line mechanism"}}]
+      Max 5 ingredients.
+
+orchestrator:
+  max_turns: 14
+  max_safety_retries: 2
+  tool_result_max_chars: 2000
+  recursion_limit: 80
+  llm_role:
+    planner: planner
+    worker: worker
+  prompts:
+    system: |
+      You are the Skincare Orchestrator. You receive a user's demographic profile
+      (age range, sex, Fitzpatrick band) and questionnaire answers. Produce a personalized cosmetic
+      skincare routine by actively researching, not guessing.
+
+      CRITICAL: After step 5 (check_contraindications), you MUST produce the final JSON and STOP.
+      Do NOT call any more tools after check_contraindications. The final JSON is your last action.
+
+      Process, in order:
+      1. Reason privately about likely skin-science considerations for this profile (sun-sensitivity,
+         melanin-related factors, hormonal/age-related changes) - a hypothesis.
+      2. Call research_skin_concerns to verify with credible dermatology sources.
+      3. Call research_ingredients to find ingredients for the confirmed concerns.
+       4. Call find_products to get real, purchasable products. Use ONLY returned products -
+          never invent names, prices, or URLs. IMPORTANT: Copy the product_name, url, and price
+          from the find_products results directly into your final JSON. Do NOT modify them.
+      5. Call check_contraindications with the full candidate ingredient list. MANDATORY -
+         non-negotiable - never finalize without it; an LLM safety agent evaluates the
+         ingredients against your flags — remove or replace anything it flags.
+       6. IMMEDIATELY after check_contraindications returns, produce the final routine JSON
+          with {routine_size} products. Do NOT call any more tools. This is your FINAL output.
+      7. If any tool result is thin or conflicting, use a generally well-tolerated routine instead.
+      8. Never state the user's inferred age, sex, or skin type to the user. No demographic report.
+      9. If findings point to a medical condition, recommend seeing a dermatologist.
+
+      Final answer MUST be STRICT JSON only (no prose, no markdown fences) matching:
+      {{"routine": [{{"product_name": str, "url": str, "price": str, "ingredient": str, "reasoning": str, "image_url": str}}],
+       "concerns_addressed": [str],
+       "disclaimer": str}}
+      If your endpoint has no native tool calling, emit tool calls as plain JSON
+      {{"tool": "name", "arguments": {{...}}}} and continue.
+    correction_nudge: |
+      Your last message was not valid structured routine JSON.
+      Re-issue the tool calls or answer with STRICT JSON containing a 'routine' array
+      (3-5 products), 'concerns_addressed' and 'disclaimer'.
+  fallback_routine:
+    - product_name: CeraVe Hydrating Facial Cleanser
+      url: "https://www.amazon.com/CeraVe-Hydrating-Facial-Cleanser-16-Ounce/dp/B01MSSDEPK"
+      price: "$14.99"
+      image_url: "https://m.media-amazon.com/images/I/71y3L+V5RIL._SL1500_.jpg"
+      ingredient: ceramides
+      reasoning: >
+        CeraVe Hydrating Facial Cleanser is a gentle, non-foaming cleanser that effectively removes dirt,
+        oil, and makeup without disrupting the skin's natural barrier. Formulated with three essential
+        ceramides (1, 3, 6-II), hyaluronic acid, and MVE technology, this cleanser helps restore and
+        maintain the skin's protective barrier while providing 24-hour hydration. Its creamy, lotion-like
+        texture is ideal for normal to dry skin types and can be used both morning and evening. The
+        fragrance-free, non-comedogenic formula is dermatologist-developed and suitable for sensitive
+        skin, making it an excellent first cleanse or standalone cleanser in any skincare routine.
+    - product_name: The Ordinary Niacinamide 10% + Zinc 1%
+      url: "https://www.amazon.com/Ordinary-Niacinamide-10-Zinc-1/dp/B07PFFMP45"
+      price: "$10.80"
+      image_url: "https://m.media-amazon.com/images/I/61nF8XjZJdL._SL1500_.jpg"
+      ingredient: niacinamide
+      reasoning: >
+        The Ordinary Niacinamide 10% + Zinc 1% is a high-strength vitamin B3 serum that targets excess
+        sebum production, enlarged pores, and uneven skin texture. Niacinamide strengthens the skin
+        barrier, reduces transepidermal water loss, and regulates oil output through zinc's
+        sebum-suppressing properties. The water-based, lightweight formulation absorbs quickly and can
+        be applied both morning and night after cleansing and before heavier creams or oils. Clinical
+        studies support niacinamide's ability to improve skin elasticity, reduce inflammation, and
+        minimize the appearance of blemishes over consistent use. Especially beneficial for oily,
+        combination, or acne-prone skin types looking to refine pores and balance their complexion.
+    - product_name: CeraVe Daily Moisturizing Lotion
+      url: "https://www.amazon.com/CeraVe-Daily-Moisturizing-Lotion-Moisturizer/dp/B000NMJG8O"
+      price: "$12.49"
+      image_url: "https://m.media-amazon.com/images/I/71F0GHF6rEL._SL1500_.jpg"
+      ingredient: hyaluronic acid
+      reasoning: >
+        CeraVe Daily Moisturizing Lotion is a lightweight, non-greasy moisturizer that provides
+        long-lasting hydration with a smooth, non-greasy finish. Formulated with three essential
+        ceramides and hyaluronic acid, this lotion helps restore the skin's natural barrier and
+        retain moisture throughout the day. The MVE (MultiVesicular Emulsion) technology provides
+        controlled release of moisturizing ingredients for 24-hour hydration. Its fast-absorbing
+        texture layers seamlessly under makeup and sunscreen, making it ideal for morning and
+        evening use. The fragrance-free, non-comedogenic formula is suitable for all skin types,
+        including sensitive skin, and is dermatologist-developed for optimal skin health.
+    - product_name: EltaMD UV Clear Broad-Spectrum SPF 46
+      url: "https://www.amazon.com/EltaMD-Clear-Broad-Spectrum-SPF/dp/B002CML1X8"
+      price: "$39.00"
+      image_url: "https://m.media-amazon.com/images/I/61R8WJ0R8DL._SL1500_.jpg"
+      ingredient: zinc oxide
+      reasoning: >
+        EltaMD UV Clear Broad-Spectrum SPF 46 is a dermatologist-recommended facial sunscreen that
+        combines 9% zinc oxide with niacinamide for dual-action protection and skin conditioning.
+        This oil-free, lightweight formula provides broad-spectrum UVA/UVB protection while helping
+        to calm and protect sensitive or acne-prone skin. Its sheer, non-greasy texture absorbs quickly
+        without leaving a white cast, making it suitable for all skin tones and comfortable enough for
+        daily wear under makeup. The niacinamide content helps reduce redness and inflammation while
+        providing antioxidant protection. Ideal for daily morning use as the final step in any
+        skincare routine, especially for those with sensitive, acne-prone, or post-procedure skin.
+  disclaimer: |
+    Cosmetic recommendations only, not a medical diagnosis.
+    Consult a dermatologist for persistent or worsening skin issues.
+
+safety:
+  llm_role: worker
+  parse_max_retries: 1
+  fitzpatrick_map:
+    white:
+      types: [1]
+      primary: 1
+    asian:
+      types: [1, 2]
+      primary: 1
+    indian:
+      types: [2, 3]
+      primary: 2
+    black:
+      types: [4, 5, 6]
+      primary: 4
+  pregnancy_contraindications:
+    - tretinoin
+    - retinol
+    - isotretinoin
+    - salicylic acid
+    - benzoyl peroxide
+  strict_blocked:
+    - fragrance
+    - parfum
+  prompts:
+    system: |
+      You are a cosmetic safety evaluator. Your job is to check whether a proposed skincare routine is safe given the user's health flags.
+
+      Evaluate the candidate ingredients against the user flags. Flag any ingredient that is:
+      - Not recommended during pregnancy (e.g., tretinoin, retinol, isotretinoin, salicylic acid, benzoyl peroxide) when the user is pregnant
+      - Fragrance/parfum when the user is fragrance-sensitive
+      - Potentially irritating for generally sensitive skin (note as caution, not a hard block)
+
+      Respond STRICTLY in JSON (no prose, no markdown fences):
+      {{"ok": bool, "issues": ["issue1", ...], "flagged_ingredients": ["ingredient_name", ...]}}
+
+      ok=true means the routine is safe to proceed. ok=false means at least one ingredient must be removed or replaced. flagged_ingredients lists the specific ingredients that are unsafe (use the exact ingredient name from the input).
+
+tools:
+  descriptions:
+    research_skin_concerns: |
+      Research sub-agent: returns 2-4 likely skin-science considerations for a
+      demographic profile, each with a one-line evidence and source URL.
+    research_ingredients: |
+      Find cosmetic ingredients that may address the given skin concerns
+      (max 5, JSON ar gate: an LLM evaluates the candidate ingredient list against the user's
+      pregnancy/sensitivity flags and returns {ok, issues}. MANDATORY - never finalize a
+      routine without it.
+
+session:
+  demographic_keys:
+    - age_range
+    - sex
+    - race
+  flag_triggers:
+    fragrance: Fragrance-sensitive
+    sensitive_skin: Sensitive
+
+langsmith:
+  project: skincare-orchestrator
+  api_key_env: LANGSMITH_API_KEY
+  tracing_enabled: "true"
+
+models:
+  price_unavailable_placeholder: price unavailable
+  parse_max_retries: 1

@@ -13,10 +13,10 @@ def test_get_providers_in_file_order():
 
 def test_oraclellm_timeouts_read_from_yml():
     providers = config.get_providers()
-    oracle = [p for p in providers if p["name"] == "oraclellm"][0]
+    oracle = next(p for p in providers if p["name"] == "oraclellm")
     assert oracle["planner_timeout"] == 300.0
     assert oracle["worker_timeout"] == 240.0
-    default = [p for p in providers if p["name"] == "agnes"][0]
+    default = next(p for p in providers if p["name"] == "agnes")
     assert default["planner_timeout"] == 60.0
     assert default["worker_timeout"] == 60.0
 
