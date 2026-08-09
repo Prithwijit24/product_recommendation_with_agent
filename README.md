@@ -1,99 +1,44 @@
-# Product Recommendation with Agent
+# SkinWise AI
 
-An AI-powered skincare recommendation system that uses facial analysis to predict demographics (age, gender, race) and provides personalized product recommendations through an agentic research pipeline.
+An AI-powered personalized skincare recommendation system that combines facial analysis with an agentic research pipeline to deliver safe, evidence-based product routines.
 
-## Features
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Streamlit](https://img.shields.io/badge/streamlit-1.52+-red)
+![LangGraph](https://img.shields.io/badge/langgraph-agentic-green)
+![Tests](https://img.shields.io/badge/tests-37%20passed-brightgreen)
 
-- **Facial Analysis**: Predict age, gender, and ethnicity from a photo using deep learning models
-- **Agentic Research**: Automated pipeline that researches skin concerns, finds products, and validates safety
-- **Product Discovery**: Searches multiple sources (aistack, Open Beauty Facts, SerpAPI) for real products
-- **Safety Gate**: LLM-based safety evaluation for pregnancy, allergies, and sensitivities
-- **Configurable**: All settings via `config/api_config.yml` - prompts, models, timeouts, limits
-- **Web UI**: Streamlit-based interface with photo upload, questionnaire, and formatted results
+## Overview
 
-## Architecture
+SkinWise AI predicts demographics (age, gender, ethnicity) from a face photo, then uses an **agentic AI orchestrator** to research skin concerns, discover ingredients, find real purchasable products from multiple sources, and validate safety before returning a personalized skincare routine.
 
-```
-User Photo → Demographics Prediction → Questionnaire → Agentic Pipeline → Results
-                                                    ↓
-                                            ┌───────────────┐
-                                            │ research_skin  │
-                                            │ _concerns     │
-                                            └───────┬───────┘
-                                                    ↓
-                                            ┌───────────────┐
-                                            │ research_     │
-                                            │ ingredients   │
-                                            └───────┬───────┘
-                                                    ↓
-                                            ┌───────────────┐
-                                            │ find_products │
-                                            │ (3 sources)   │
-                                            └───────┬───────┘
-                                                    ↓
-                                            ┌───────────────┐
-                                            │ safety_gate   │
-                                            │ (LLM agent)   │
-                                            └───────┬───────┘
-                                                    ↓
-                                              Final Routine
-```
+## Key Features
 
-## Project Structure
-
-```
-├── config/
-│   └── api_config.yml          # All configuration (providers, prompts, timeouts)
-├── src/
-│   └── project_folder/
-│       ├── agentic/            # Core recommendation engine
-│       │   ├── __init__.py
-│       │   ├── models.py       # Pydantic models for LLM outputs
-│       │   ├── orchestrator.py # LangGraph state machine
-│       │   ├── products.py     # Product discovery (3 sources)
-│       │   ├── research.py     # Research sub-agents
-│       │   ├── safety.py       # LLM safety gate
-│       │   ├── providers.py    # LLM provider router with failover
-│       │   ├── session.py      # User profile builder
-│       │   ├── tools.py        # LangChain tools for planner
-│       │   ├── config.py       # Config loader
-│       │   ├── aistack.py      # Aistack search/crawl client
-│       │   └── questionnaire.py # Static questionnaire
-│       ├── app.py              # Streamlit UI
-│       └── notebooks/          # Jupyter notebooks for model training
-├── scripts/
-│   └── api_runner.py           # CLI test harness
-├── tests/
-│   └── agentic/                # Unit tests (37 tests)
-├── Dockerfile
-├── pyproject.toml
-└── requirements.txt
-```
+- **Facial Analysis**: Deep learning models predict age, gender, and ethnicity from photos
+- **Agentic Research Pipeline**: Automated LangGraph-based workflow with multiple sub-agents
+- **Multi-Source Product Discovery**: Searches Aistack, Open Beauty Facts, and SerpAPI
+- **LLM Safety Gate**: Validates products against pregnancy, allergies, and sensitivities
+- **Multi-Provider LLM Router**: Automatic failover across 4+ LLM providers
+- **Evidence-Grounded**: Research backed by search results, not hallucinations
+- **Configurable**: All prompts, models, and settings via YAML
+- **Web UI**: Streamlit interface with Docker support
 
 ## Quick Start
 
 ### Prerequisites
-
 - Python 3.11.14
-- API keys for LLM providers (at least one of: Agnes, OpenCode, LLM7IO, OracleLLM)
-- SerpAPI key (optional, for product images and prices)
+- API keys for at least one LLM provider
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/Prithwijit24/product_recommendation_with_agent.git
-cd product_recommendation_with_agent
-
-# Install dependencies
+git clone https://github.com/Prithwijit24/skinwise-ai.git
+cd skinwise-ai
 pip install -r requirements.txt
-# or
-uv pip install -r requirements.txt
 ```
 
 ### Configuration
 
-Create a `.env` file with your API keys:
+Create a `.env` file:
 
 ```env
 # LLM Providers (at least one required)
@@ -102,96 +47,139 @@ OPENCODE_API_KEY=your_key_here
 LLM7IO_API_KEY=your_key_here
 ORACLELLM_API_KEY=your_key_here
 
-# Product Search
-SERP_API_KEY=your_serpapi_key        # Optional, for images/prices
-AISTACK_BASE_URL=your_aistack_url    # Optional
-AISTACK_API_KEY=your_aistack_key     # Optional
+# Product Search (optional, enables images/prices)
+SERP_API_KEY=your_serpapi_key
+AISTACK_BASE_URL=your_aistack_url
+AISTACK_API_KEY=your_aistack_key
 
-# LangSmith (optional, for tracing)
+# LangSmith (optional tracing)
 LANGSMITH_API_KEY=your_key_here
 ```
 
-### Run the Web UI
+### Run
 
 ```bash
+# Web UI
 streamlit run src/project_folder/app.py
+
+# CLI Test
+python scripts/api_runner.py --preset app-f
+
+# Docker
+docker build -t skinwise-ai .
+docker run -p 7860:7860 --env-file .env skinwise-ai
 ```
 
-### Run CLI Test
+## Architecture
 
-```bash
-python scripts/api_runner.py --preset app-f
-python scripts/api_runner.py --preset app-m
-python scripts/api_runner.py --race asian --age-range 25-34 --sex F
+```
+User Photo → Face Detection → Demographics (Age/Gender/Ethnicity)
+                                        ↓
+                              Skincare Questionnaire
+                                        ↓
+                    ┌─────────────────────────────────────┐
+                    │     Agentic Orchestrator (LangGraph) │
+                    │  ┌─────────────────────────────────┐│
+                    │  │ 1. research_skin_concerns       ││
+                    │  │ 2. research_ingredients        ││
+                    │  │ 3. find_products (3 sources)    ││
+                    │  │ 4. check_contraindications     ││
+                    │  └─────────────────────────────────┘│
+                    │         ↓ Safety Gate ↓             │
+                    │  ┌─────────────────────────────────┐│
+                    │  │ 5. Final Routine (3 products)   ││
+                    │  └─────────────────────────────────┘│
+                    └─────────────────────────────────────┘
+                                        ↓
+                              Personalized Routine JSON
+```
+
+## Project Structure
+
+```
+├── config/
+│   └── api_config.yml          # All configuration (providers, prompts, safety rules)
+├── src/project_folder/
+│   ├── agentic/                # Core recommendation engine
+│   │   ├── models.py           # Pydantic schemas for LLM outputs
+│   │   ├── orchestrator.py     # LangGraph state machine
+│   │   ├── products.py         # Multi-source product discovery
+│   │   ├── research.py         # Research sub-agents
+│   │   ├── safety.py           # LLM safety gate
+│   │   ├── providers.py        # Multi-provider LLM router
+│   │   ├── session.py          # User profile builder
+│   │   ├── tools.py            # LangChain tools
+│   │   ├── config.py           # Config loader
+│   │   ├── aistack.py          # Search/crawl client
+│   │   └── questionnaire.py    # Static questionnaire
+│   ├── app.py                  # Streamlit web UI
+│   └── main.py                 # Demographic prediction ML pipeline
+├── scripts/
+│   └── api_runner.py           # CLI test harness
+├── tests/agentic/              # 37 unit tests
+├── Dockerfile
+└── pyproject.toml
 ```
 
 ## Configuration
 
-All settings are in `config/api_config.yml`:
+All settings in `config/api_config.yml`:
 
 ```yaml
-providers:
-  agnes:
-    base_url: https://apihub.agnes-ai.com/v1
-    planner_model: agnes-2.0-flash
-    worker_model: agnes-2.0-flash
-
 orchestrator:
-  max_turns: 14
-  max_safety_retries: 2
-  routine_size: 3
-  recursion_limit: 80
+  max_turns: 14              # Max planner turns
+  max_safety_retries: 2      # Safety gate retries
+  routine_size: 3            # Products per routine
+  recursion_limit: 80        # LangGraph limit
 
 products:
   default_budget: medium
   budget_limits:
-    low: 30.0
-    medium: 90.0
+    low: 30.0               # USD
+    medium: 90.0            # USD
     high: .inf
+
+providers:
+  agnes:
+    planner_model: agnes-2.0-flash
+    worker_model: agnes-2.0-flash
+  # ... 3 more providers
 ```
 
 ## Product Discovery Pipeline
 
-The system searches for products in this order:
+Three-tier cascading search:
 
-1. **Aistack Search** (free/cheap) - Primary source
-2. **Open Beauty Facts** (free) - Fallback
-3. **SerpAPI** (costly) - Final fallback, includes images and prices
+1. **Aistack Search** (free/cheap) - Primary product source
+2. **Open Beauty Facts** (free) - Open database fallback
+3. **SerpAPI Google Shopping** (paid) - Price + image enrichment
 
-For products without images, the system fetches the product page and extracts images using:
+Images extracted from:
 - Open Graph (`og:image`) meta tags
-- Schema.org image markup
-- Direct product image URLs (for Open Beauty Facts)
+- Direct product image URLs
+- Page content parsing
 
 ## Safety Gate
 
-The LLM safety agent evaluates products against:
-- Pregnancy contraindications (tretinoin, retinol, isotretinoin, salicylic acid, benzoyl peroxide)
-- Fragrance sensitivities
-- General skin sensitivity
+LLM-powered safety validation checks:
+- **Pregnancy**: Blocks tretinoin, retinol, isotretinoin, salicylic acid, benzoyl peroxide
+- **Fragrance Sensitivity**: Blocks fragrance, parfum
+- **General Sensitivity**: Advisory for sensitive skin
 
-Products that fail the safety check are removed or replaced (up to 2 retries).
+Fail-open design: LLM failure does not block the routine.
 
-## Testing
+## LLM Provider Router
 
-```bash
-# Run all tests
-python -m pytest tests/ -v
+Multi-provider failover with automatic degradation:
 
-# Run specific test file
-python -m pytest tests/agentic/test_products.py -v
-```
+| Provider | Planner Model | Worker Model | Timeout |
+|----------|--------------|--------------|---------|
+| Agnes | agnes-2.0-flash | agnes-2.0-flash | 60s |
+| OpenCode | deepseek-v4-flash-free | big-pickle | 60s |
+| LLM7IO | gpt-oss:20b | codestral-latest | 60s |
+| OracleLLM | deepseek-r1-80k | deepseek-r1-80k | 300s |
 
-37 unit tests covering:
-- Product discovery and filtering
-- Research sub-agents
-- Safety gate
-- Provider router
-- Orchestrator state machine
-
-## API Reference
-
-### Main Entry Point
+## API Usage
 
 ```python
 from project_folder.agentic import orchestrate
@@ -208,26 +196,39 @@ result = orchestrate(
 #     "routine": [
 #         {
 #             "product_name": "...",
-#             "url": "...",
-#             "price": "$XX.XX",
-#             "ingredient": "...",
-#             "reasoning": "...",
-#             "image_url": "..."
+#             "url": "https://...",
+#             "price": "$24.99",
+#             "ingredient": "Niacinamide",
+#             "reasoning": "Detailed 50+ word explanation...",
+#             "image_url": "https://..."
 #         }
 #     ],
-#     "concerns_addressed": ["..."],
-#     "disclaimer": "..."
+#     "concerns_addressed": ["UV sensitivity", "Hyperpigmentation"],
+#     "disclaimer": "Cosmetic recommendations only..."
 # }
 ```
 
-## Technologies
+## Testing
 
-- **LangGraph**: Agent state machine
-- **LangChain**: LLM framework
-- **Pydantic**: Data validation
-- **Streamlit**: Web UI
-- **SerpAPI**: Product search (Google Shopping)
-- **TensorFlow/Keras**: Facial analysis models
+```bash
+python -m pytest tests/ -v
+```
+
+**37 tests** covering:
+- Product discovery and budget filtering
+- Research sub-agents
+- Safety gate validation
+- Provider router failover
+- Orchestrator state machine
+
+## Tech Stack
+
+- **AI/ML**: LangGraph, LangChain, TensorFlow, Keras
+- **LLMs**: Agnes, OpenCode, LLM7IO, OracleLLM (OpenAI-compatible)
+- **Search**: SerpAPI, Aistack, Open Beauty Facts
+- **Data**: Pydantic, DuckDB, Pandas
+- **UI**: Streamlit, OpenCV
+- **Infra**: Docker, LangSmith (optional)
 
 ## License
 
