@@ -14,16 +14,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Check HF_TOKEN is set
+      - name: Check HF_ACCESS_TOKEN is set
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_ACCESS_TOKEN: ${{ secrets.HF_ACCESS_TOKEN }}
         run: |
-          if [ -z "$HF_TOKEN" ]; then
-            echo "❌ HF_TOKEN secret is empty or not set."
-            echo "Go to GitHub repo → Settings → Secrets and variables → Actions and add HF_TOKEN."
+          if [ -z "$HF_ACCESS_TOKEN" ]; then
+            echo "❌ HF_ACCESS_TOKEN secret is empty or not set."
+            echo "Go to GitHub repo → Settings → Secrets and variables → Actions and add HF_ACCESS_TOKEN."
             exit 1
           else
-            echo "✅ HF_TOKEN is set (length: ${#HF_TOKEN} characters)"
+            echo "✅ HF_ACCESS_TOKEN is set (length: ${#HF_ACCESS_TOKEN} characters)"
           fi
 
       - name: Install huggingface_hub
@@ -31,9 +31,9 @@ jobs:
 
       - name: Push to Hugging Face Space
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_ACCESS_TOKEN: ${{ secrets.HF_ACCESS_TOKEN }}
         run: |
           huggingface-cli upload Prithwijit24/product_reco_deploy . . \
             --repo-type=space \
-            --token="$HF_TOKEN" \
+            --token="$HF_ACCESS_TOKEN" \
             --commit-message="Auto-deploy from GitHub Actions"
