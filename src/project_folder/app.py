@@ -1,10 +1,13 @@
 """Next-Gen Personalized E-commerce: face → demographics → agentic skincare routine."""
 
-from pathlib import Path
+import logging
+import os
+import subprocess as sb
 import sys
 import uuid
-import subprocess as sb
-import os
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -14,14 +17,13 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 import cv2
+import gdown
 import numpy as np
-
-from PIL import Image
 import streamlit as st
+from main import main
+from PIL import Image
 
 from project_folder.agentic import get_questionnaire, orchestrate
-from main import main
-import gdown
 
 st.set_page_config(layout="wide")
 
@@ -191,26 +193,20 @@ with st.container(border=True, vertical_alignment="center", horizontal_alignment
 
             photopath = f"data/{st.session_state.session_id}/photo.jpg"
 
+            # Make predictions if not already done
             if not st.session_state.prediction:
                 with st.spinner("I am trying to predict the gender ...... ", show_time=True):
                     st.session_state.gender = main(
                         prediction_type="single", target="gender", image_path=photopath
                     )
-                text_col.markdown(
-                    f"**Predicted Gender (Model Estimate):** {st.session_state.gender}"
-                )
 
                 with st.spinner("I am trying to predict the race ...... ", show_time=True):
                     st.session_state.race = main(
                         prediction_type="single", target="race", image_path=photopath
                     )
-                text_col.markdown(
-                    f"**Predicted Ethnicity (Model Estimate):** {st.session_state.race}"
-                )
 
                 with st.spinner("I am trying to predict the age .......", show_time=True):
-                    st.session_state.age = int(
-                        round(
+                    st.session_state.age = round(
                             float(
                                 main(
                                     prediction_type="single",
@@ -219,18 +215,25 @@ with st.container(border=True, vertical_alignment="center", horizontal_alignment
                                 )
                             )
                         )
-                    )
+                st.session_state.prediction = True
+
+            # Always display predictions (persists across rerenders)
+            if st.session_state.prediction:
+                text_col.markdown(
+                    f"**Predicted Gender (Model Estimate):** {st.session_state.gender}"
+                )
+                text_col.markdown(
+                    f"**Predicted Ethnicity (Model Estimate):** {st.session_state.race}"
+                )
                 text_col.markdown(
                     f"**Predicted Age (Model Estimate):** {st.session_state.age} years"
                 )
-                st.session_state.prediction = True
-
-                if text_col.button("Get My Skincare Routine"):
-                    st.session_state.run_skincare = True
 
 
 st.divider()
 
+if st.session_state.prediction and text_col.button("Get My Skincare Routine"):
+                    st.session_state.run_skincare = True
 
 if st.session_state.run_skincare:
     st.markdown("### :snowflake: Skincare Recommendation Section")
@@ -278,24 +281,73 @@ if st.session_state.run_skincare:
             st.info("No products survived the safety gate for this profile.")
         else:
             with st.container(border=True):
-                st.markdown(
-                    f"**Concerns addressed:** {', '.join(result.get('concerns_addressed', []))}"
-                )
-                for item in result.get("routine", []):
+                concerns = result.get('concerns_addressed', [])
+                if concerns:
+                    st.markdown("**🎯 :blue[Concerns Addressed:]** " + ", ".join(f"*{c}*" for c in concerns))
+
+                for i, item in enumerate(result.get("routine", [])[:3]):  # Only show 3 products
                     with st.container(border=True):
-                        head_col, price_col = st.columns([4, 1])
-                        head_col.markdown(f"##### {item.get('product_name', '')}")
-                        price_col.markdown(f"**:orange[{item.get('price', '')}]**")
-                        st.markdown(f"*Ingredient:* {item.get('ingredient', '')}")
-                        st.markdown(f"*Why:* {item.get('reasoning', '')}")
-                        url = str(item.get("url") or "")
-                        if url.startswith("http"):
-                            st.link_button("Open product", url)
+                        # Two-column layout: text on left, image on right
+                        text_col, img_col = st.columns([3, 1])
+
+                        with text_col:
+                            # Product name - smaller and bold
+                            st.markdown(f"**:package: {item.get('product_name', 'Unknown Product')}**")
+                            # Price directly under name
+                            st.markdown(f"**:green[Price: {item.get('price', 'Price unavailable')}]**")
+
+                            # Ingredient with color
+                            st.markdown(f"**🔬 Key Ingredient:** :orange[{item.get('ingredient', 'N/A')}]")
+
+                            # Reasoning with formatting
+                            reasoning = item.get('reasoning', '')
+                            if reasoning:
+                                st.markdown("**💡 Why this product:**")
+                                # Clean up the reasoning text - remove wrapping asterisks
+                                cleaned_reasoning = reasoning.strip()
+                                while cleaned_reasoning.startswith('*') and cleaned_reasoning.endswith('*'):
+                                    cleaned_reasoning = cleaned_reasoning[1:-1].strip()
+                                # Render with italic styling using HTML
+                                st.markdown(
+                                    f"<div style='font-style: italic; color: #666666; "
+                                    f"background-color: #f8f9fa; padding: 10px; "
+                                    f"border-radius: 5px; border-left: 3px solid #4a90d9;'>"
+                                    f"{cleaned_reasoning}</div>",
+                                    unsafe_allow_html=True,
+                                )
+
+                            # Product URL - aligned right with high contrast
+                            url = str(item.get("url") or "")
+                            if url.startswith("http"):
+                                st.markdown("<br>", unsafe_allow_html=True)  # Breathing space
+                                btn_col1, btn_col2, btn_col3 = st.columns([2, 1, 1])
+                                with btn_col3:
+                                    st.link_button("🛒 Open Product", url, type="primary", help=f"View {item.get('product_name', 'product')} online")
+
+                        with img_col:
+                            # Product image on the right - height matches content
+                            image_url = item.get("image_url", "")
+                            if image_url and isinstance(image_url, str) and image_url.startswith("http"):
+                                # Use CSS to make image height match content
+                                st.markdown(
+                                    f'<div style="display: flex; justify-content: center; align-items: center; height: 100%; min-height: 250px; background-color: #f8f9fa; border-radius: 8px; padding: 10px;">'
+                                    f'<img src="{image_url}" style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px;">'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                st.markdown(
+                                    '<div style="display: flex; justify-content: center; align-items: center; height: 100%; min-height: 250px; background-color: #f8f9fa; border-radius: 8px; padding: 10px;">'
+                                    '<span style="color: #999;">🖼️ Image not available</span>'
+                                    '</div>',
+                                    unsafe_allow_html=True,
+                                )
+
                         st.markdown("---")
 
         st.caption(str(result.get("disclaimer", "")))
         if result.get("error"):
-            st.warning(f"Partial run — {result['error']}")
+            st.warning(f"⚠️ Partial run — {result['error']}")
 
 
 

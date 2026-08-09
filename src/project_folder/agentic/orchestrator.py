@@ -341,6 +341,49 @@ def build_graph(
             "safety_retries": retries + 1,
         }
 
+    def _enrich_with_product_data(routine: RoutineOutput, messages: list) -> RoutineOutput:
+        """Match products with their URLs and images from find_products results."""
+        import json as _json
+
+        # Extract product data from find_products tool results
+        product_lookup = {}
+        for m in messages:
+            if isinstance(m, ToolMessage):
+                try:
+                    content = _json.loads(m.content)
+                    if isinstance(content, list):
+                        for item in content:
+                            if isinstance(item, dict) and "name" in item:
+                                product_lookup[item["name"].lower().strip()] = item
+                except (_json.JSONDecodeError, TypeError):
+                    continue
+
+        # Match and fill in URLs and images
+        for product in routine.routine:
+            name_key = product.product_name.lower().strip()
+            # Try exact match first
+            if name_key in product_lookup:
+                match = product_lookup[name_key]
+                if not product.url and match.get("url"):
+                    product.url = match["url"]
+                if not product.image_url and match.get("image_url"):
+                    product.image_url = match["image_url"]
+                if not product.price and match.get("price"):
+                    product.price = match["price"]
+            else:
+                # Try partial match
+                for lookup_name, match in product_lookup.items():
+                    if (name_key in lookup_name or lookup_name in name_key) and len(name_key) > 10:
+                        if not product.url and match.get("url"):
+                            product.url = match["url"]
+                        if not product.image_url and match.get("image_url"):
+                            product.image_url = match["image_url"]
+                        if not product.price and match.get("price"):
+                            product.price = match["price"]
+                        break
+
+        return routine
+
     def finish_node(state: OrchestratorState) -> dict:
         final = state.get("final") or build_fallback()
         if final is None:
@@ -350,6 +393,10 @@ def build_graph(
         if not stripped.routine:
             stripped = build_fallback()
             logger.warning("[graph] all products stripped by safety, using fallback")
+
+        # Enrich products with URLs and images from find_products results
+        stripped = _enrich_with_product_data(stripped, state.get("messages", []))
+
         logger.info(f"[graph] finish: {len(stripped.routine)} products, concerns={stripped.concerns_addressed}")
         return {
             "result": {

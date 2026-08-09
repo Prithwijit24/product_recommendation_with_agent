@@ -42,13 +42,24 @@ def fetch_product_image(url: str, timeout: float = 10.0, product_name: str = "")
         })
         html = resp.text
 
+        # Try to find product image from Open Beauty Facts pattern first
+        obf_img = re.search(
+            r'https://images\.openbeautyfacts\.org/images/products/[^\s"<>]+\.jpg',
+            html,
+        )
+        if obf_img:
+            return obf_img.group(0)
+
         # Try og:image first (most reliable for product pages)
         og_match = re.search(
             r'<meta\s+(?:property|name)=["\']og:image["\']\s+content=["\']([^"\']+)["\']',
             html, re.IGNORECASE,
         )
         if og_match:
-            return og_match.group(1)
+            img_url = og_match.group(1)
+            # Skip if it's just a logo
+            if "logo" not in img_url.lower():
+                return img_url
 
         # Try twitter:image
         tw_match = re.search(
@@ -56,7 +67,9 @@ def fetch_product_image(url: str, timeout: float = 10.0, product_name: str = "")
             html, re.IGNORECASE,
         )
         if tw_match:
-            return tw_match.group(1)
+            img_url = tw_match.group(1)
+            if "logo" not in img_url.lower():
+                return img_url
 
         # Try schema.org image
         schema_match = re.search(r'"image"\s*:\s*"([^"]+)"', html)
@@ -68,13 +81,18 @@ def fetch_product_image(url: str, timeout: float = 10.0, product_name: str = "")
             r'<img[^>]+src=["\'](https?://[^"\']+\.(?:jpg|jpeg|png|webp))["\']',
             html, re.IGNORECASE,
         )
-        # Filter out small icons and logos
+        # Filter out small icons and logos, prefer product images
         for img_url in img_matches:
             if any(skip in img_url.lower() for skip in ["logo", "icon", "avatar", "sprite", "sprites"]):
                 continue
             if "1x1" in img_url or "pixel" in img_url:
                 continue
-            return img_url
+            if "product" in img_url.lower() or "front" in img_url.lower():
+                return img_url
+        # Return first non-logo image as last resort
+        for img_url in img_matches:
+            if "logo" not in img_url.lower() and "icon" not in img_url.lower():
+                return img_url
 
     except (httpx.HTTPError, ValueError, TimeoutError) as e:
         logger.debug(f"Direct fetch failed for {url}: {e}")
@@ -126,10 +144,16 @@ def _serp_search(query: str, serp_api_key: str | None = None) -> list[dict]:
         logger.warning(f"SerpAPI request failed for '{query}': {e}")
         return []
     out = []
-    for item in resp.json().get("shopping_results", []):
+    raw_results = resp.json().get("shopping_results", [])
+    logger.info(f"SerpAPI returned {len(raw_results)} raw results for: {query}")
+    for item in raw_results:
         url = item.get("link", "")
         title = item.get("title", "")
+        if not url:
+            # Try product_link as fallback
+            url = item.get("product_link", "")
         if not _is_product_url(url, title):
+            logger.debug(f"Filtered out: {title[:50]} | URL: {url[:80]}")
             continue
         out.append(
             {
@@ -174,6 +198,7 @@ def _open_beauty_facts(query: str) -> list[dict]:
                 "name": p.get("product_name", "") or "",
                 "url": url,
                 "price": "",
+                "image_url": "",  # Will be fetched by fetch_product_image
                 "source": "openbeautyfacts",
             }
         )

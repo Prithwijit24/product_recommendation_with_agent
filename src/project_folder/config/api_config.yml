@@ -103,6 +103,7 @@ orchestrator:
   max_safety_retries: 2
   tool_result_max_chars: 2000
   recursion_limit: 80
+  routine_size: 3
   llm_role:
     planner: planner
     worker: worker
@@ -136,6 +137,9 @@ orchestrator:
       {{"routine": [{{"product_name": str, "url": str, "price": str, "ingredient": str, "reasoning": str, "image_url": str}}],
        "concerns_addressed": [str],
        "disclaimer": str}}
+      CRITICAL: Copy the 'url', 'image_url', and 'price' from the find_products results directly into your final JSON.
+      Do NOT modify or leave them blank - users need these to view and purchase products.
+      The image_url should be the exact URL from the search results - do not change it.
       If your endpoint has no native tool calling, emit tool calls as plain JSON
       {{"tool": "name", "arguments": {{...}}}} and continue.
     correction_nudge: |
@@ -184,20 +188,7 @@ orchestrator:
         texture layers seamlessly under makeup and sunscreen, making it ideal for morning and
         evening use. The fragrance-free, non-comedogenic formula is suitable for all skin types,
         including sensitive skin, and is dermatologist-developed for optimal skin health.
-    - product_name: EltaMD UV Clear Broad-Spectrum SPF 46
-      url: "https://www.amazon.com/EltaMD-Clear-Broad-Spectrum-SPF/dp/B002CML1X8"
-      price: "$39.00"
-      image_url: "https://m.media-amazon.com/images/I/61R8WJ0R8DL._SL1500_.jpg"
-      ingredient: zinc oxide
-      reasoning: >
-        EltaMD UV Clear Broad-Spectrum SPF 46 is a dermatologist-recommended facial sunscreen that
-        combines 9% zinc oxide with niacinamide for dual-action protection and skin conditioning.
-        This oil-free, lightweight formula provides broad-spectrum UVA/UVB protection while helping
-        to calm and protect sensitive or acne-prone skin. Its sheer, non-greasy texture absorbs quickly
-        without leaving a white cast, making it suitable for all skin tones and comfortable enough for
-        daily wear under makeup. The niacinamide content helps reduce redness and inflammation while
-        providing antioxidant protection. Ideal for daily morning use as the final step in any
-        skincare routine, especially for those with sensitive, acne-prone, or post-procedure skin.
+
   disclaimer: |
     Cosmetic recommendations only, not a medical diagnosis.
     Consult a dermatologist for persistent or worsening skin issues.
