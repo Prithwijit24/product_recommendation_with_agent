@@ -1,10 +1,10 @@
 name: Deploy to Hugging Face Space
 
 on:
+  workflow_dispatch:
   # push:
   #   branches:
-  #     - deploy_branch
-  workflow_dispatch:
+  #     - main
 
 jobs:
   deploy:
@@ -21,10 +21,13 @@ jobs:
           git config --global user.email "ghoshprithwijit39@gmail.com"
           git config --global user.name "Prithwijit24"
 
-          git clone https://huggingface.co/spaces/Prithwijit24/product_reco_deploy
-          cd product_reco_deploy
+          # Clone the Space with the token embedded so push works later
+          git clone https://Prithwijit24:${HF_TOKEN}@huggingface.co/spaces/Prithwijit24/product_reco_deploy hf_space
 
+          # Copy everything from the current repo into the Space repo
+          rsync -av --exclude='.git' --exclude='hf_space' --exclude='.github' ./ hf_space/
+
+          cd hf_space
           git add .
-          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes"
+          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes to commit"
           git push
-
