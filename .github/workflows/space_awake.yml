@@ -1,0 +1,29 @@
+name: Keep HF Space Awake
+
+on:
+  schedule:
+    # Runs every 10 minutes. Adjust as needed (HF free-tier Spaces
+    # typically sleep after ~48h of inactivity, but Streamlit's own
+    # session can idle out sooner, so a frequent ping is safer).
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit health endpoint
+        run: |
+          URL="https://prithwijit24-product-reco-deploy.hf.space/_stcore/health"
+          echo "Pinging $URL"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL")
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Space is awake (HTTP $HTTP_STATUS)"
+          else
+            echo "⚠️ Unexpected response (HTTP $HTTP_STATUS) — Space may be asleep or starting up"
+            # Not failing the job here since a sleeping Space returning
+            # non-200 on the first ping is expected; it'll wake on this
+            # request and respond normally on the next scheduled run.
+          fi
