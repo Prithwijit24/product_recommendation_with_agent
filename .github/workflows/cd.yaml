@@ -1,9 +1,10 @@
 name: Deploy to Hugging Face Space
 
 on:
-  push:
-    branches:
-      - deploy_branch
+  # push:
+  #   branches:
+  #     - deploy_branch
+  workflow_dispatch:
 
 jobs:
   deploy:
