@@ -72,6 +72,8 @@ docker run -p 7860:7860 --env-file .env skinwise-ai
 
 ## Architecture
 
+![Architecture Diagram](docs/architecture.svg)
+
 ```
 User Photo → Face Detection → Demographics (Age/Gender/Ethnicity)
                                         ↓
