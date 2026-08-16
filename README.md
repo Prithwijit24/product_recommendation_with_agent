@@ -1,4 +1,3 @@
-````markdown
 # SkinWise Intelligent Recommender
 
 An ML-powered skincare recommendation system combining **facial analysis, demographic prediction, and agentic product research** to build personalized skincare routines.
@@ -27,7 +26,7 @@ Image → MTCNN → FaceNet (512D) → StandardScaler → PCA (50D)
                                       │
                                       ▼
                             Fitzpatrick Mapping
-````
+```
 
 ### 2. Agentic Recommendation
 
@@ -185,6 +184,3 @@ This is a research/engineering project, not a medical diagnostic system. Model p
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-```
-```
