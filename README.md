@@ -23,9 +23,9 @@ Image → MTCNN → FaceNet (512D) → StandardScaler → PCA (50D)
                      ▼                ▼                ▼
                   LightGBM           KNN            CatBoost
                     Age            Gender             Race
-                                      │
-                                      ▼
-                            Fitzpatrick Mapping
+                                                       │
+                                                       ▼
+                                               Fitzpatrick Mapping
 ```
 
 ### 2. Agentic Recommendation
